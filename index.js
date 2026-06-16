@@ -11,6 +11,16 @@ const todoRouter = require("./routes/todos");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+const defaultOriginPatterns = [
+  /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/,
+  /^https:\/\/[\w-]+\.vercel\.app$/,
+];
+
+const extraOrigins = (process.env.CORS_ORIGINS || "")
+  .split(",")
+  .map((value) => value.trim())
+  .filter(Boolean);
+
 const corsOptions = {
   origin(origin, callback) {
     if (!origin || origin === "null") {
@@ -19,7 +29,8 @@ const corsOptions = {
     }
 
     const allowed =
-      /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+      defaultOriginPatterns.some((pattern) => pattern.test(origin)) ||
+      extraOrigins.includes(origin);
 
     callback(null, allowed);
   },
