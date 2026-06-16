@@ -36,7 +36,11 @@ app.get("/health", (_req, res) => {
 });
 
 app.use("/api/todos", todoRouter);
-app.use(express.static(path.join(__dirname, "../todo")));
+
+const todoStaticPath = path.join(__dirname, "../todo");
+if (require("fs").existsSync(todoStaticPath)) {
+  app.use(express.static(todoStaticPath));
+}
 
 async function startServer() {
   const mongoUri = process.env.MONGODB_URI;
@@ -46,14 +50,16 @@ async function startServer() {
     process.exit(1);
   }
 
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`서버 실행 중: port ${PORT}`);
+  });
+
   try {
-    await mongoose.connect(mongoUri);
+    await mongoose.connect(mongoUri, {
+      serverSelectionTimeoutMS: 10000,
+    });
     console.log("연결 성공");
     console.log(`MongoDB: ${mongoose.connection.host} / ${mongoose.connection.name}`);
-
-    app.listen(PORT, () => {
-      console.log(`서버 실행 중: http://localhost:${PORT}`);
-    });
   } catch (error) {
     console.error("MongoDB 연결 실패:", error.message);
     process.exit(1);
